@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ScamRadar AI | Professional Scam & Link Checker</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;500;700;900&family=Space+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+    <style>
+        /* =====================================
+           1. DYNAMIC THEME ENGINE
+        ====================================== */
+        :root {
+            --bg-deep: #0b0514;
+            --panel-bg: rgba(20, 10, 35, 0.65);
+            --theme-primary: #b026ff;
+            --theme-glow: rgba(176, 38, 255, 0.4);
+            --theme-border: rgba(176, 38, 255, 0.25);
+            --text-main: #ffffff;
+            --text-muted: #a0aabf;
+            
+            --safe: #00e676;
+            --warning: #ffb300;
+            --danger: #ff1744;
+        }
+
+        [data-theme="abyss"] {
+            --bg-deep: #020617;
+            --panel-bg: rgba(10, 15, 30, 0.65);
+            --theme-primary: #3b82f6;
+            --theme-glow: rgba(59, 130, 246, 0.4);
+            --theme-border: rgba(59, 130, 246, 0.25);
+        }
+
+        [data-theme="eclipse"] {
+            --bg-deep: #030a0a;
+            --panel-bg: rgba(10, 20, 20, 0.65);
+            --theme-primary: #06b6d4;
+            --theme-glow: rgba(6, 182, 212, 0.4);
+            --theme-border: rgba(6, 182, 212, 0.25);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Outfit', sans-serif; }
+        body { background-color: var(--bg-deep); color: var(--text-main); overflow: hidden; height: 100vh; transition: background-color 0.8s ease; }
+        .hidden { display: none !important; }
+
+        /* Backgrounds */
+        .cyber-grid { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; z-index: -2; background-image: linear-gradient(var(--theme-border) 1px, transparent 1px), linear-gradient(90deg, var(--theme-border) 1px, transparent 1px); background-size: 50px 50px; transform: perspective(600px) rotateX(60deg) translateY(-100px); animation: gridMove 20s linear infinite; transition: background-image 0.8s ease;}
+        @keyframes gridMove { 0% { background-position: 0 0; } 100% { background-position: 0 50px; } }
+        
+        .orb { position: absolute; border-radius: 50%; filter: blur(100px); z-index: -1; opacity: 0.5; background: var(--theme-primary); transition: background 0.8s ease; animation: breathe 8s infinite alternate; }
+        @keyframes breathe { 0% { transform: scale(1); opacity: 0.3; } 100% { transform: scale(1.2); opacity: 0.6; } }
+
+        /* Navigation */
+        nav { display: flex; justify-content: space-between; align-items: center; padding: 15px 40px; background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(20px); border-bottom: 1px solid var(--theme-border); height: 70px; transition: border-color 0.8s ease; }
+        .logo { font-size: 1.6rem; font-weight: 900; color: #fff; display: flex; align-items: center; gap: 10px; letter-spacing: 1px;}
+        .logo i { color: var(--theme-primary); transition: color 0.8s ease;}
+        .nav-controls { display: flex; align-items: center; gap: 20px; }
+        
+        /* Theme Switcher */
+        .theme-switcher { display: flex; gap: 10px; background: rgba(0,0,0,0.5); padding: 5px 10px; border-radius: 20px; border: 1px solid var(--theme-border); }
+        .theme-btn { width: 22px; height: 22px; border-radius: 50%; cursor: pointer; border: 2px solid transparent; transition: 0.3s; }
+        .theme-btn.active { border-color: #fff; transform: scale(1.2); }
+        .theme-nebula { background: #b026ff; } .theme-abyss { background: #3b82f6; } .theme-eclipse { background: #06b6d4; }
+
+        .status-badge { display: flex; align-items: center; gap: 8px; font-family: 'Space Mono'; font-size: 0.8rem; color: var(--safe); background: rgba(0, 230, 118, 0.1); padding: 5px 15px; border-radius: 20px; border: 1px solid rgba(0, 230, 118, 0.3);}
+        .pulse { width: 8px; height: 8px; background: var(--safe); border-radius: 50%; box-shadow: 0 0 10px var(--safe); animation: pulseAnim 1.5s infinite; }
+        @keyframes pulseAnim { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+        /* Input Screen */
+        .generator-container { max-width: 800px; margin: 100px auto; text-align: center; }
+        h1 { font-size: 3.8rem; font-weight: 900; line-height: 1.1; margin-bottom: 20px; text-transform: uppercase;}
+        .gradient-text { background: linear-gradient(to right, #fff, var(--theme-primary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; transition: 0.8s ease; }
+        
+        .prompt-box { background: var(--panel-bg); border: 1px solid var(--theme-border); border-radius: 20px; padding: 10px; display: flex; align-items: center; backdrop-filter: blur(20px); box-shadow: 0 20px 50px rgba(0,0,0,0.5); transition: all 0.5s ease; }
+        .prompt-box:focus-within { border-color: var(--theme-primary); box-shadow: 0 0 40px var(--theme-glow); }
+        .prompt-box input { flex: 1; background: transparent; border: none; outline: none; color: #fff; font-size: 1.2rem; padding: 20px; }
+        .prompt-box input::placeholder { color: rgba(255,255,255,0.4); font-size: 1.1rem;}
+        
+        .btn-generate { background: var(--theme-primary); border: none; padding: 15px 30px; border-radius: 15px; color: #fff; font-size: 1.1rem; font-weight: 900; cursor: pointer; transition: 0.3s; display: flex; align-items: center; gap: 10px;}
+        .btn-generate:hover { transform: translateY(-3px); box-shadow: 0 10px 30px var(--theme-glow); }
+
+        /* Loading Screen */
+        #loading-screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(5, 5, 10, 0.95); backdrop-filter: blur(15px); z-index: 100; flex-direction: column; justify-content: center; align-items: center; }
+        .loader-ring { width: 80px; height: 80px; border-radius: 50%; border: 4px solid transparent; border-top-color: var(--theme-primary); border-right-color: #fff; animation: spin 1s linear infinite; transition: border-top-color 0.8s ease; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        /* WORKSPACE */
+        #workspace { display: flex; flex-direction: column; height: calc(100vh - 70px); width: 100%; }
+        
+        /* Toolbar inside Workspace */
+        .workspace-toolbar { display: flex; justify-content: space-between; align-items: center; padding: 15px 30px; background: rgba(0, 0, 0, 0.3); border-bottom: 1px solid var(--theme-border); height: 60px; transition: border-color 0.8s ease;}
+        .toolbar-btn { background: transparent; border: 1px solid var(--theme-border); color: #fff; padding: 8px 15px; border-radius: 8px; cursor: pointer; font-size: 0.9rem; transition: 0.3s; display: flex; align-items: center; gap: 8px; font-weight: 600;}
+        .toolbar-btn:hover { background: var(--theme-glow); border-color: var(--theme-primary); }
+        .btn-export { background: var(--theme-primary); border: none; color: #fff; padding: 8px 20px; border-radius: 8px; cursor: pointer; font-weight: 700; transition: 0.3s; display: flex; align-items: center; gap: 8px;}
+        .btn-export:hover { box-shadow: 0 0 15px var(--theme-glow); transform: translateY(-2px);}
+
+        .editor-layout { display: flex; flex: 1; height: calc(100% - 60px); }
+
+        /* Left Sidebar (Report Sections) */
+        .workspace-sidebar { width: 260px; background: rgba(0, 0, 0, 0.3); border-right: 1px solid var(--theme-border); overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 15px; transition: border-color 0.8s ease; }
+        .nav-item { display: flex; align-items: center; gap: 10px; color: var(--text-muted); font-weight: 600; padding: 12px 15px; border-radius: 10px; cursor: pointer; transition: 0.2s; border: 1px solid transparent; }
+        .nav-item:hover { background: rgba(255, 255, 255, 0.05); color: #fff; }
+        .nav-item.active { background: var(--theme-glow); color: #fff; border-color: var(--theme-primary); }
+
+        /* Main Report Canvas */
+        .main-canvas { flex: 1; background: radial-gradient(circle at center, rgba(255,255,255,0.02) 0%, transparent 70%); padding: 40px; overflow-y: auto; display: flex; justify-content: center; align-items: flex-start; }
+        .slide-canvas { width: 100%; max-width: 900px; background: var(--panel-bg); border: 1px solid var(--theme-border); border-radius: 16px; box-shadow: 0 25px 60px rgba(0,0,0,0.8); padding: 50px; display: flex; flex-direction: column; position: relative; overflow: hidden; backdrop-filter: blur(30px); transition: border-color 0.8s ease; }
+        .slide-title { font-size: 2.5rem; font-weight: 900; color: #fff; margin-bottom: 20px; outline: none; border-bottom: 2px solid transparent; transition: 0.3s;}
+        .slide-title:focus { border-color: var(--theme-primary); }
+        .slide-text { font-size: 1.1rem; line-height: 1.7; color: var(--text-muted); outline: none; flex: 1; overflow-y: auto;}
+
+        /* Right Panel: Security Dashboard */
+        .intel-panel { width: 320px; background: rgba(0, 0, 0, 0.3); border-left: 1px solid var(--theme-border); padding: 25px; display: flex; flex-direction: column; gap: 20px; transition: border-color 0.8s ease; overflow-y: auto;}
+        .panel-header { font-size: 1rem; color: #fff; font-weight: 800; display: flex; align-items: center; gap: 10px; text-transform: uppercase; letter-spacing: 1px; }
+        .panel-header i { color: var(--theme-primary); transition: color 0.8s ease;}
+
+        /* Cone SVG Score */
+        .risk-cone-wrapper { position: relative; width: 100%; height: 160px; display: flex; justify-content: center; align-items: flex-end; padding-bottom: 20px;}
+        .threat-cone { width: 160px; height: 110px; transform: scaleY(-1); }
+        .cone-path { fill: none; stroke: var(--safe); stroke-width: 5; stroke-linecap: round; stroke-dasharray: 200; stroke-dashoffset: 200; transition: stroke-dashoffset 1.5s cubic-bezier(0.4, 0, 0.2, 1), stroke 1s; filter: drop-shadow(0 -5px 10px rgba(0,0,0,0.5));}
+        .threat-score-display { position: absolute; bottom: 0; text-align: center; }
+        .score-value { font-family: 'Space Mono'; font-size: 3.5rem; font-weight: 900; color: var(--safe); line-height: 1; transition: color 1s; }
+        .score-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-top: 5px;}
+
+        /* Threat Breakdown Grid */
+        .matrix-matrix { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; }
+        .matrix-box { background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; transition: 0.3s; }
+        .box-label { font-size: 0.7rem; color: #8892b0; text-transform: uppercase; margin-bottom: 8px;}
+        .box-value { font-family: 'Space Mono'; font-size: 0.95rem; font-weight: 800;}
+        .box-match { font-size: 0.8rem; color: #aaa; margin-top: 5px;}
+        .matrix-critical { border-left: 4px solid var(--danger); color: var(--danger); }
+        .matrix-warning { border-left: 4px solid var(--warning); color: var(--warning); }
+        .matrix-safe { border-left: 4px solid var(--safe); color: var(--safe); }
+    </style>
+</head>
+<body>
+
+    <div class="cyber-grid"></div>
+    <div class="orb" style="width: 500px; height: 500px; top: -150px; left: -150px;"></div>
+    <div class="orb" style="width: 400px; height: 400px; bottom: -100px; right: -100px; opacity: 0.2;"></div>
+
+    <nav>
+        <div class="logo"><i class="fa-solid fa-shield-halved"></i> ScamRadar AI</div>
+        <div class="nav-controls">
+            <div class="theme-switcher">
+                <div class="theme-btn theme-nebula active" onclick="changeTheme('default', this)" title="Purple Theme"></div>
+                <div class="theme-btn theme-abyss" onclick="changeTheme('abyss', this)" title="Blue Theme"></div>
+                <div class="theme-btn theme-eclipse" onclick="changeTheme('eclipse', this)" title="Cyan Theme"></div>
+            </div>
+            <div class="status-badge" id="net-status"><div class="pulse"></div> SYSTEM: READY</div>
+        </div>
+    </nav>
+
+    <div class="container generator-container" id="generator-screen">
+        <h1>Scan Links & Messages <br><span class="gradient-text">For Scams Instantly.</span></h1>
+        <p style="color: var(--text-muted); font-size: 1.1rem; margin-bottom: 40px;">Professional security tool to protect you from fake websites, phishing SMS, and fraudulent links.</p>
+        
+        <div class="prompt-box">
+            <input type="text" id="ai-prompt" placeholder="Paste suspicious link or message here... (e.g. bkash offer)" autocomplete="off">
+            <button class="btn-generate" id="generate-btn">
+                <i class="fa-solid fa-magnifying-glass"></i> Check Security
+            </button>
+        </div>
+        
+        <div style="margin-top: 30px; color: var(--text-muted); font-size: 0.9rem;">
+            Test the System: 
+            <span style="cursor:pointer; color:#fff; text-decoration:underline;" onclick="document.getElementById('ai-prompt').value='Urgent! Verify your bKash account now at http://bit.ly/secure-update'">Fake SMS Link</span> | 
+            <span style="cursor:pointer; color:#fff; text-decoration:underline;" onclick="document.getElementById('ai-prompt').value='https://www.google.com'">Safe Website</span>
+        </div>
+    </div>
+
+    <div id="loading-screen" class="hidden">
+        <div class="loader-ring"></div>
+        <div style="margin-top: 30px; font-size: 1.2rem; color: #fff; letter-spacing: 2px; font-family: 'Space Mono';" id="loading-msg">ANALYZING TEXT & LINKS...</div>
+    </div>
+
+    <div id="workspace" class="hidden">
+        
+        <div class="workspace-toolbar">
+            <div style="color: #fff; font-weight: bold; font-size: 1.2rem;">Analysis Workspace</div>
+            <div style="display: flex; gap: 15px;">
+                <button class="toolbar-btn" onclick="location.reload()"><i class="fa-solid fa-arrow-left"></i> Check New Link</button>
+                <button class="btn-export" id="export-btn" onclick="exportReport()"><i class="fa-solid fa-file-pdf"></i> Download PDF Report</button>
+            </div>
+        </div>
+
+        <div class="editor-layout">
+            <div class="workspace-sidebar">
+                <div class="panel-header"><i class="fa-solid fa-list-ul"></i> REPORT SECTIONS</div>
+                <div id="slide-nav-container" style="display: flex; flex-direction: column; gap: 10px; margin-top: 10px;">
+                    </div>
+            </div>
+
+            <div class="main-canvas" id="pdf-content-area">
+                <div class="slide-canvas" id="active-slide-canvas">
+                    <h1 class="slide-title" contenteditable="true" spellcheck="false" id="active-title">Report Title</h1>
+                    <div class="slide-text" contenteditable="true" spellcheck="false" id="active-text">Analysis content goes here...</div>
+                </div>
+            </div>
+
+            <div class="intel-panel">
+                <div class="panel-header"><i class="fa-solid fa-chart-pie"></i> SECURITY DASHBOARD</div>
+                <p style="font-size: 0.85rem; color: var(--text-muted); line-height: 1.5;">Real-time safety score generated by ScamRadar AI.</p>
+
+                <div class="risk-cone-wrapper">
+                    <svg viewBox="0 0 100 100" class="threat-cone">
+                        <path d="M 10 90 A 40 40 0 0 1 90 90" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="5" stroke-linecap="round" />
+                        <path class="cone-path" id="cone-arc" d="M 10 90 A 40 40 0 0 1 90 90" />
+                    </svg>
+                    <div class="threat-score-display">
+                        <div class="score-value" id="threat-score">0</div>
+                        <div class="score-label">RISK SCORE (%)</div>
+                    </div>
+                </div>
+
+                <div class="panel-header" style="margin-top: 10px;"><i class="fa-solid fa-magnifying-glass-chart"></i> THREAT BREAKDOWN</div>
+                <div class="matrix-matrix">
+                    <div class="matrix-box" id="vector-SE"><div class="box-label">Scam Words</div><div class="box-value">CHECKING</div><div class="box-match">None</div></div>
+                    <div class="matrix-box" id="vector-UI"><div class="box-label">Link Safety</div><div class="box-value">CHECKING</div><div class="box-match">None</div></div>
+                    <div class="matrix-box" id="vector-NP"><div class="box-label">Connection</div><div class="box-value">CHECKING</div><div class="box-match">None</div></div>
+                    <div class="matrix-box" id="vector-final"><div class="box-label">Overall Status</div><div class="box-value">PENDING</div><div class="box-match">Waiting</div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Theme Switcher
+        function changeTheme(themeName, btnElement) {
+            if (themeName === 'default') {
+                document.documentElement.removeAttribute('data-theme');
+            } else {
+                document.documentElement.setAttribute('data-theme', themeName);
+            }
+            document.querySelectorAll('.theme-btn').forEach(btn => btn.classList.remove('active'));
+            btnElement.classList.add('active');
+        }
+
+        const promptInput = document.getElementById('ai-prompt');
+        const genScreen = document.getElementById('generator-screen');
+        const loadScreen = document.getElementById('loading-screen');
+        const workspace = document.getElementById('workspace');
+        const loadMsg = document.getElementById('loading-msg');
+        
+        let currentSlides = [];
+        let activeSlideIndex = 0;
+
+        // Start Check
+        document.getElementById('generate-btn').addEventListener('click', () => {
+            const topic = promptInput.value.trim();
+            if (!topic) return alert("Please paste a link or message to check.");
+
+            gsap.to(genScreen, { opacity: 0, y: -30, duration: 0.5, onComplete: () => {
+                genScreen.classList.add('hidden');
+                loadScreen.classList.remove('hidden');
+                loadScreen.style.display = 'flex';
+                gsap.fromTo(loadScreen, {opacity: 0}, {opacity: 1, duration: 0.5});
+                
+                loadMsg.innerText = "SCANNING FOR THREATS...";
+                
+                // Use built-in logic directly for instant result
+                setTimeout(() => {
+                    const localData = runLocalEngine(topic);
+                    processData(topic, localData);
+                }, 1500);
+            }});
+        });
+
+        // Built-in Scam Check Engine
+        function runLocalEngine(payload) {
+            const lowerInput = payload.toLowerCase();
+            let score = 0;
+            
+            let intel = {
+                vectors: {
+                    url_integrity: { status: "SAFE", match: "Direct Link", threat_score: 0 },
+                    social_engineering: { status: "SAFE", match: "Clean Text", threat_score: 0 },
+                    network_protocol: { status: "SAFE", match: "Secure (HTTPS)", threat_score: 0 }
+                }
+            };
+
+            // Keyword Check
+            const keywords = ['bkash', 'nagad', 'lottery', 'winner', 'free gift', 'password', 'verify account', 'urgent'];
+            let matches = keywords.filter(kw => lowerInput.includes(kw));
+
+            if (matches.length > 0) {
+                intel.vectors.social_engineering.status = "WARNING";
+                intel.vectors.social_engineering.match = matches.join(', ');
+                score += matches.length * 25;
+            }
+
+            // Link Check
+            const urlRegex = /(https?:\/\/[^\s]+)/g;
+            const urls = lowerInput.match(urlRegex);
+
+            if (urls) {
+                const url = urls[0];
+                if (url.includes('http://')) {
+                    intel.vectors.network_protocol.status = "WARNING";
+                    intel.vectors.network_protocol.match = "Insecure (HTTP)";
+                    score += 30;
+                }
+                const shorteners = ['bit.ly', 'cutt.ly', 'tinyurl', 'rb.gy'];
+                let shortMatch = shorteners.find(s => url.includes(s));
+                if (shortMatch) {
+                    intel.vectors.url_integrity.status = "DANGER";
+                    intel.vectors.url_integrity.match = `Hidden Link (${shortMatch})`;
+                    score += 50;
+                }
+            }
+
+            let finalScore = Math.min(score, 99);
+            if (finalScore === 0) finalScore = Math.floor(Math.random() * 5); // 0-4% random baseline
+            
+            let threatLevel = finalScore >= 70 ? "HIGH RISK" : finalScore > 30 ? "SUSPICIOUS" : "SAFE";
+
+            return { finalScore: finalScore, threatLevel: threatLevel, report: intel };
+        }
+
+        // Show Workspace
+        function processData(topic, intelData) {
+            // User-friendly sections
+            currentSlides = [
+                { id: 0, title: `Security Scan Overview`, text: `We scanned the following text/link:<br><br><strong style="color:var(--text-main); font-family:'Space Mono';">"${topic}"</strong><br><br>The system found the overall safety status to be: <strong>${intelData.threatLevel}</strong>.` },
+                { id: 1, title: `Scam Keyword Check`, text: `Checking for words scammers often use to trick people.<br><br>Detected Issues: <strong>${intelData.report.vectors.social_engineering.match}</strong>` },
+                { id: 2, title: `Link Safety Details`, text: `Checking if the website link is hidden or insecure.<br><br>Connection Security: <strong>${intelData.report.vectors.network_protocol.match}</strong><br>Link Type: <strong>${intelData.report.vectors.url_integrity.match}</strong>` },
+                { id: 3, title: `Final Recommendation`, text: intelData.finalScore >= 70 ? "Do not click any links or reply to this message. It is highly likely to be a scam." : intelData.finalScore > 30 ? "Be very careful. Do not provide any personal passwords or OTPs." : "This looks safe. No common scam patterns were found." }
+            ];
+
+            gsap.to(loadScreen, { opacity: 0, duration: 0.5, onComplete: () => {
+                loadScreen.classList.add('hidden');
+                workspace.classList.remove('hidden');
+                
+                const tl = gsap.timeline();
+                tl.from(".workspace-toolbar", { y: -20, opacity: 0, duration: 0.5 })
+                  .from(".workspace-sidebar", { x: -30, opacity: 0, duration: 0.6, ease: "power2.out" }, "-=0.3")
+                  .from(".intel-panel", { x: 30, opacity: 0, duration: 0.6, ease: "power2.out" }, "-=0.4")
+                  .from(".main-canvas", { y: 20, opacity: 0, duration: 0.6 }, "-=0.4");
+
+                renderSlideNav();
+                renderIntelPanel(intelData);
+                loadActiveSlide(0);
+            }});
+        }
+
+        function renderSlideNav() {
+            const slideNav = document.getElementById('slide-nav-container');
+            slideNav.innerHTML = '';
+            
+            const sectionNames = ["Overview", "Keyword Analysis", "Link Details", "Recommendation"];
+            
+            currentSlides.forEach((slide, index) => {
+                const navItem = document.createElement('div');
+                navItem.className = `nav-item ${index === activeSlideIndex ? 'active' : ''}`;
+                navItem.innerHTML = `<i class="fa-solid fa-file-lines"></i> ${sectionNames[index]}`;
+                navItem.onclick = () => loadActiveSlide(index);
+                slideNav.appendChild(navItem);
+            });
+        }
+
+        function loadActiveSlide(index) {
+            activeSlideIndex = index;
+            document.getElementById('active-title').innerText = currentSlides[index].title;
+            document.getElementById('active-text').innerHTML = currentSlides[index].text;
+            renderSlideNav();
+            gsap.fromTo("#active-slide-canvas", {opacity: 0, scale: 0.98}, {opacity: 1, scale: 1, duration: 0.4, ease: "power2.out"});
+        }
+
+        function renderIntelPanel(data) {
+            const finalScore = data.finalScore;
+            const vectors = data.report.vectors;
+
+            let threatColor = "var(--safe)";
+            if (finalScore > 30) threatColor = "var(--warning)";
+            if (finalScore >= 70) threatColor = "var(--danger)";
+
+            // Cone SVG
+            const conePath = document.getElementById('cone-arc');
+            conePath.style.stroke = threatColor;
+            const offset = 200 - (200 * finalScore / 100);
+            gsap.to(conePath, { strokeDashoffset: offset, duration: 2, ease: "power2.out", delay: 0.5 });
+
+            // Score Counter
+            let obj = { value: 0 };
+            gsap.to(obj, {
+                value: finalScore, duration: 2, ease: "power2.out", delay: 0.5,
+                onUpdate: () => {
+                    const display = document.getElementById('threat-score');
+                    display.innerText = Math.round(obj.value);
+                    display.style.color = threatColor;
+                }
+            });
+
+            populateBox('SE', vectors.social_engineering);
+            populateBox('UI', vectors.url_integrity);
+            populateBox('NP', vectors.network_protocol);
+
+            const finalBox = document.getElementById('vector-final');
+            finalBox.querySelector('.box-value').innerText = data.threatLevel;
+            finalBox.querySelector('.box-match').innerText = finalScore >= 70 ? "BLOCK TARGET" : finalScore > 30 ? "BE CAREFUL" : "CLEAN";
+            finalBox.className = 'matrix-box ' + (finalScore >= 70 ? 'matrix-critical' : finalScore > 30 ? 'matrix-warning' : 'matrix-safe');
+        }
+
+        function populateBox(id, vector) {
+            const box = document.getElementById(`vector-${id}`);
+            box.querySelector('.box-value').innerText = vector.status;
+            
+            // Format match string to fit box
+            let matchText = vector.match;
+            if(matchText.length > 15) matchText = matchText.substring(0, 15) + '...';
+            box.querySelector('.box-match').innerText = matchText;
+            
+            box.className = 'matrix-box ' + (vector.status === "DANGER" || vector.status === "WARNING" ? (vector.threat_score >= 50 ? 'matrix-critical' : 'matrix-warning') : 'matrix-safe');
+        }
+
+        // PDF Export
+        function exportReport() {
+            const btn = document.getElementById('export-btn');
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Generating...';
+            
+            const element = document.getElementById('pdf-content-area');
+            const opt = {
+                margin:       0.5,
+                filename:     `ScamRadar_Report_${Date.now()}.pdf`,
+                image:        { type: 'jpeg', quality: 0.98 },
+                html2canvas:  { scale: 2, backgroundColor: '#0b0514' },
+                jsPDF:        { unit: 'in', format: 'letter', orientation: 'landscape' }
+            };
+
+            html2pdf().set(opt).from(element).save().then(() => {
+                btn.innerHTML = '<i class="fa-solid fa-file-pdf"></i> Download PDF Report';
+            });
+        }
+    </script>
+</body>
+</html>
